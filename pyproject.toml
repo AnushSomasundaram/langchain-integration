@@ -1,0 +1,47 @@
+[project]
+name = "langchain-meetstream"
+version = "0.1.0"
+description = "LangChain integration for MeetStream: load meeting transcripts as Documents and give agents MeetStream tools."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "langchain-core>=1.0,<2.0",
+    "httpx>=0.27,<1.0",
+    "pydantic>=2.7,<3.0",
+]
+
+[project.urls]
+Repository = "https://github.com/meetstream-ai/meetstream-langchain"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "respx>=0.21",
+    "ruff>=0.6",
+]
+examples = [
+    "langchain>=1.0,<2.0",
+    "langchain-openai>=1.0,<2.0",
+    "langchain-text-splitters>=1.0,<2.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["langchain_meetstream"]
+
+[tool.pytest.ini_options]
+# `bridge/` now lives nested under this package's root (a standalone-repo
+# layout change from the monorepo, where it was a sibling directory) --
+# without this, a bare `pytest` invoked from here would also try to collect
+# `bridge/tests`, colliding on the `tests.conftest` module name with this
+# package's own `tests/conftest.py`. Scoping to this package's own tests
+# keeps `pytest` (here) and `(cd bridge && pytest)` independent, matching
+# docs/DEVELOPMENT.md.
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120

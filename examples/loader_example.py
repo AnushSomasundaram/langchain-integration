@@ -1,0 +1,51 @@
+"""Basic MeetStreamLoader usage.
+
+Prerequisites:
+    1. The bridge server running (see ../../bridge/README.md), pointed at a
+       real MeetStream API key.
+    2. A meeting_id for a MeetStream meeting whose transcript has already
+       finished processing (dispatch a bot with `dispatch_bot_tool` or
+       `MeetStreamClient.dispatch_bot`, wait for the meeting to end, then use
+       its bot_id here).
+    3. `MEETSTREAM_API_KEY` and `MEETSTREAM_BRIDGE_URL` set in the
+       environment, or passed explicitly below.
+
+Run: `python examples/loader_example.py <meeting_id>`
+"""
+
+from __future__ import annotations
+
+import sys
+
+from langchain_meetstream import MeetStreamAPIError, MeetStreamLoader
+
+
+def main() -> None:
+    if len(sys.argv) != 2:
+        print(f"Usage: python {sys.argv[0]} <meeting_id>")
+        raise SystemExit(1)
+    meeting_id = sys.argv[1]
+
+    # api_key/base_url default to the MEETSTREAM_API_KEY / MEETSTREAM_BRIDGE_URL
+    # environment variables if not passed explicitly -- see the package README.
+    loader = MeetStreamLoader(meeting_id=meeting_id)
+
+    try:
+        documents = loader.load()
+    except MeetStreamAPIError as exc:
+        if exc.code == "transcript_not_ready":
+            print("Transcript is still processing -- try again in a bit.")
+            return
+        raise
+
+    if not documents:
+        print(f"No transcript segments found for meeting {meeting_id} (empty transcript).")
+        return
+
+    for doc in documents:
+        print(f"[{doc.metadata['speaker'] or 'Unknown'} @ {doc.metadata['start_time']}s] {doc.page_content}")
+        print(f"  metadata: {doc.metadata}")
+
+
+if __name__ == "__main__":
+    main()
